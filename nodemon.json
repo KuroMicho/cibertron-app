@@ -1,0 +1,6 @@
+{
+  "ignore": [".git", "node_modules", "dist"],
+  "watch": ["src/**/*.ts", "public/*.html"],
+  "ext": "ts",
+  "exec": "ts-node ./node_modules/electron/cli.js src/main.ts"
+}
