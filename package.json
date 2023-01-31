@@ -1,38 +1,123 @@
 {
-  "name": "app",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
-  },
-  "private": true,
-  "dependencies": {
-    "@angular/animations": "^15.0.0",
-    "@angular/common": "^15.0.0",
-    "@angular/compiler": "^15.0.0",
-    "@angular/core": "^15.0.0",
-    "@angular/forms": "^15.0.0",
-    "@angular/platform-browser": "^15.0.0",
-    "@angular/platform-browser-dynamic": "^15.0.0",
-    "@angular/router": "^15.0.0",
-    "rxjs": "~7.5.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.12.0"
-  },
-  "devDependencies": {
-    "@angular-devkit/build-angular": "^15.0.4",
-    "@angular/cli": "~15.0.4",
-    "@angular/compiler-cli": "^15.0.0",
-    "@types/jasmine": "~4.3.0",
-    "jasmine-core": "~4.5.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.1.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.0.0",
-    "typescript": "~4.8.2"
-  }
+    "name": "ciber-col",
+    "version": "1.0.0",
+    "description": "Application build with Angular and Electron for monitoring your local network terminals",
+    "author": "KuroMicho & JostinDev",
+    "license": "MIT",
+    "main": "./dist/main.js",
+    "scripts": {
+        "ng": "ng",
+        "electron": "electron",
+        "start": "npm-run-all -p electron:serve ng:serve",
+        "ng:serve": "ng serve -o",
+        "electron:tsc": "tsc -p tsconfig.serve.json",
+        "electron:serve": "wait-on tcp:4200 && npm run electron:tsc && electron ./dist/main.js",
+        "electron:dev": "npm run electron:tsc && electron ./dist/main.js",
+        "build": "ng build --base-href ./ && npm run electron:tsc",
+        "nodemon": "nodemon",
+        "test": "ng test --watch=false",
+        "lint": "ng lint",
+        "lint:fix": "ng lint --fix",
+        "forge:start": "electron-forge start",
+        "forge:package": "electron-forge package",
+        "forge:make": "electron-forge make"
+    },
+    "dependencies": {
+        "@angular/animations": "^15.0.0",
+        "@angular/cdk": "^15.1.1",
+        "@angular/common": "^15.0.0",
+        "@angular/compiler": "^15.0.0",
+        "@angular/core": "^15.0.0",
+        "@angular/forms": "^15.0.0",
+        "@angular/material": "^15.1.1",
+        "@angular/platform-browser": "^15.0.0",
+        "@angular/platform-browser-dynamic": "^15.0.0",
+        "@angular/router": "^15.0.0",
+        "electron-squirrel-startup": "^1.0.0",
+        "electron-store": "^8.1.0",
+        "express": "^4.18.2",
+        "node-notifier": "^10.0.1",
+        "node-ssh": "^13.0.1",
+        "rxjs": "~7.5.0",
+        "socket.io": "^4.5.4",
+        "ssh2": "^1.11.0",
+        "ssh2-streams": "^0.4.10",
+        "tslib": "^2.3.0",
+        "zone.js": "~0.12.0"
+    },
+    "devDependencies": {
+        "@angular-devkit/build-angular": "^15.0.4",
+        "@angular-eslint/builder": "15.2.0",
+        "@angular-eslint/eslint-plugin": "15.2.0",
+        "@angular-eslint/eslint-plugin-template": "15.2.0",
+        "@angular-eslint/schematics": "15.2.0",
+        "@angular-eslint/template-parser": "15.2.0",
+        "@angular/cli": "~15.0.4",
+        "@angular/compiler-cli": "^15.0.0",
+        "@electron-forge/cli": "^6.0.4",
+        "@electron-forge/maker-deb": "^6.0.4",
+        "@electron-forge/maker-rpm": "^6.0.4",
+        "@electron-forge/maker-squirrel": "^6.0.4",
+        "@electron-forge/maker-zip": "^6.0.4",
+        "@types/express": "^4.17.15",
+        "@types/jasmine": "~4.3.0",
+        "@types/ssh2": "^1.11.7",
+        "@types/ssh2-streams": "^0.1.9",
+        "@typescript-eslint/eslint-plugin": "5.48.1",
+        "@typescript-eslint/parser": "5.48.1",
+        "dotenv": "^16.0.3",
+        "electron": "^22.0.3",
+        "electron-connect": "^0.6.3",
+        "electron-debug": "^3.2.0",
+        "electron-reloader": "^1.2.3",
+        "eslint": "^8.31.0",
+        "eslint-config-prettier": "^8.6.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "jasmine-core": "~4.5.0",
+        "karma": "~6.4.0",
+        "karma-chrome-launcher": "~3.1.0",
+        "karma-coverage": "~2.2.0",
+        "karma-jasmine": "~5.1.0",
+        "karma-jasmine-html-reporter": "~2.0.0",
+        "nodemon": "^2.0.20",
+        "npm-run-all": "^4.1.5",
+        "prettier": "^2.8.3",
+        "prettier-eslint": "^15.0.1",
+        "ts-node": "^10.9.1",
+        "typescript": "~4.8.2",
+        "wait-on": "^7.0.1"
+    },
+    "config": {
+        "forge": {
+            "packagerConfig": {
+                "options": {
+                    "name": "CiberCOL",
+                    "version-string": "1.0.0"
+                },
+                "asar": true
+            },
+            "makers": [
+                {
+                    "name": "@electron-forge/maker-squirrel",
+                    "config": {
+                        "name": "electron_quick_start"
+                    }
+                },
+                {
+                    "name": "@electron-forge/maker-zip",
+                    "platforms": [
+                        "darwin"
+                    ]
+                },
+                {
+                    "name": "@electron-forge/maker-deb",
+                    "config": {}
+                },
+                {
+                    "name": "@electron-forge/maker-rpm",
+                    "config": {}
+                }
+            ]
+        }
+    }
 }

@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "ES2015",
+        "strict": true,
+        "allowJs": true,
+        "checkJs": true,
+        "module": "CommonJS",
+        "rootDir": "./app",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "outDir": "./dist",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": ["app/**/*.ts"],
+    "exclude": ["node_modules"]
+}

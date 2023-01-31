@@ -1,0 +1,41 @@
+<div class="container">
+    <h2>Configurando {{ terminal.name }}</h2>
+    <form [formGroup]="settingsForm" (ngSubmit)="onSaveSettings(settingsForm.value)">
+        <div class="column">
+            <div class="row">
+                <mat-slide-toggle formControlName="panelControl" color="basic" labelPosition="before" [disableRipple]="true"
+                    >Deshabilitar Panel de Control</mat-slide-toggle
+                >
+            </div>
+            <div class="footer">
+                <mat-slide-toggle formControlName="acceptTerms" color="basic" required
+                    >Acepto termino de servicio</mat-slide-toggle
+                >
+                <mat-error *ngIf="settingsForm.get('acceptTerms')?.hasError('required')">{{
+                    getErrorMessage('acceptTerms')
+                }}</mat-error>
+            </div>
+            <button
+                mat-raised-button
+                type="submit"
+                color="basic"
+                [class.spinner]="loading"
+                [disabled]="settingsForm.invalid || loading">
+                Guardar
+            </button>
+        </div>
+    </form>
+</div>
+<ng-template #template>
+    <div class="alert-form">
+        <span *ngIf="iconStatus">
+            <mat-icon aria-hidden="false" aria-label="ok icon" fontIcon="expand_circle_down"></mat-icon
+        ></span>
+        <span *ngIf="!iconStatus">
+            <mat-icon aria-hidden="false" aria-label="error icon" fontIcon="do_not_disturb_on"></mat-icon
+        ></span>
+        <p>
+            {{ alert }}
+        </p>
+    </div>
+</ng-template>

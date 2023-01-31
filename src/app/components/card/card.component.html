@@ -1,0 +1,41 @@
+<mat-card [class.spinner]="loading" [class.overlay]="loading">
+    <mat-card-header>
+        <div class="card__description">
+            <mat-card-title>{{ terminal.name }}</mat-card-title>
+            <mat-card-subtitle>{{ terminal.ip }} </mat-card-subtitle>
+        </div>
+        <span class="card__status">
+            <p>{{ terminal.status ? 'Conectado' : 'Desconectado' }}</p>
+            <mat-icon [ngStyle]="{ color: terminal.status ? 'green' : 'orangered' }">circle</mat-icon>
+        </span>
+    </mat-card-header>
+    <mat-card-content>
+        <p>{{ terminal.timer }}</p>
+        <mat-divider></mat-divider>
+    </mat-card-content>
+    <mat-card-actions>
+        <button mat-icon-button color="basic" aria-label="Example icon button with a menu icon" (click)="onTerminal()">
+            <mat-icon>sync</mat-icon>
+        </button>
+        <button
+            mat-icon-button
+            color="primary"
+            aria-label="Example icon button with a menu icon"
+            (click)="onSettings()">
+            <mat-icon>settings</mat-icon>
+        </button>
+    </mat-card-actions>
+</mat-card>
+<ng-template #template>
+    <div class="alert-form">
+        <span *ngIf="iconStatus">
+            <mat-icon aria-hidden="false" aria-label="ok icon" fontIcon="expand_circle_down"></mat-icon
+        ></span>
+        <span *ngIf="!iconStatus">
+            <mat-icon aria-hidden="false" aria-label="error icon" fontIcon="do_not_disturb_on"></mat-icon
+        ></span>
+        <p>
+            {{ alert }}
+        </p>
+    </div>
+</ng-template>

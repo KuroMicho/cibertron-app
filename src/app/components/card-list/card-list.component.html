@@ -1,0 +1,3 @@
+<div class="card-list">
+    <app-card *ngFor="let terminal of terminals" [terminal]="terminal" (terminalId)="sendTerminal($event)"></app-card>
+</div>
