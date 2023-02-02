@@ -21,7 +21,7 @@ export class AppComponent implements OnDestroy {
             id: 1,
             name: 'Kevin',
             ip: '192.168.1.3',
-            status: true,
+            status: false,
             timer: '00:00:00',
         },
     ];

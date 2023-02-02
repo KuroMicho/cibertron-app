@@ -1,10 +1,73 @@
-import { BrowserWindow, ipcMain, app } from 'electron';
-// import Store from 'electron-store';
 import environment from './config/environment';
+import path from 'path';
+import { spawn } from 'child_process';
+import { BrowserWindow, ipcMain, app, autoUpdater } from 'electron';
 import SSH from './modules/ssh/ssh';
 import Server from './server';
-import { InfoTime, InfoUser } from './types/electron.types';
+import { Credentials, InfoTime, InfoUser } from './types/electron.types';
 import { decrypt } from './utils/crypto';
+// import Store from 'electron-store';
+
+function handleSquirrelEvent() {
+    if (process.argv.length === 1) {
+        return false;
+    }
+
+    const appFolder = path.resolve(process.execPath, '..');
+    const rootAtomFolder = path.resolve(appFolder, '..');
+    const updateDotExe = path.resolve(path.join(rootAtomFolder, 'Update.exe'));
+    const exeName = path.basename(process.execPath);
+
+    const spawnProcess = function (command: any, args: any) {
+        let spawnedProcess: any;
+
+        try {
+            spawnedProcess = spawn(command, args, { detached: true });
+        } catch (error) {
+            console.log(error);
+        }
+
+        return spawnedProcess;
+    };
+
+    const spawnUpdate = function (args: any) {
+        return spawnProcess(updateDotExe, args);
+    };
+
+    const squirrelEvent = process.argv[1];
+    switch (squirrelEvent) {
+        case '--squirrel-install':
+        case '--squirrel-updated':
+            // Optionally do things such as:
+            // - Add your .exe to the PATH
+            // - Write to the registry for things like file associations and
+            //   explorer context menus
+
+            // Install desktop and start menu shortcuts
+            spawnUpdate(['--createShortcut', exeName]);
+
+            setTimeout(app.quit, 1000);
+            return true;
+
+        case '--squirrel-uninstall':
+            // Undo anything you did in the --squirrel-install and
+            // --squirrel-updated handlers
+
+            // Remove desktop and start menu shortcuts
+            spawnUpdate(['--removeShortcut', exeName]);
+
+            setTimeout(app.quit, 1000);
+            return true;
+
+        case '--squirrel-obsolete':
+            // This is called on the outgoing version of your app before
+            // we update to the new version - it's the opposite of
+            // --squirrel-updated
+
+            app.quit();
+            return true;
+    }
+}
 
 class MainWindow {
     private window!: BrowserWindow;
@@ -13,21 +76,20 @@ class MainWindow {
     private client!: SSH;
     // private store: Store<Record<string, unknown>>;
     constructor() {
-        this.env = environment.node_env;
+        this.env = environment.node_env || 'production';
         // this.store = new Store();
     }
 
-    private init() {
+    _init() {
+        app.setAppUserModelId('com.squirrel.cibertron.Cibertron');
+
         this.window = new BrowserWindow({
             width: 1280,
             height: 720,
-            title: 'CiberCOL',
-            resizable: true,
-            fullscreenable: true,
+            title: 'Cibertron',
             webPreferences: {
                 devTools: this.env !== 'production' ? true : false,
-                nodeIntegration: true,
-                preload: `${app.getAppPath()}/preload.js`,
+                preload: path.join(__dirname, 'preload.js'),
             },
         });
 
@@ -35,22 +97,62 @@ class MainWindow {
             this.window.loadURL('http://localhost:4200');
             this.window.webContents.openDevTools();
         } else {
+            this.window.setMenu(null);
             this.window.loadURL(`file://${__dirname}/index.html`);
         }
     }
 
-    private setSocket(): void {
-        this.server.io.on('connection', async socket => {
+    _sendStatusToWindow(text: string) {
+        this.window.webContents.send('message', text);
+        console.log(text);
+    }
+
+    _onUpdates() {
+        autoUpdater.setFeedURL({
+            url: 'https://github.com/KuroMicho/cibertron-app/releases/latest',
+            serverType: 'json',
+        });
+        autoUpdater.on('checking-for-update', () => {
+            this._sendStatusToWindow('Checking for update...');
+        });
+        autoUpdater.on('update-available', (info: any) => {
+            this._sendStatusToWindow('Update available.');
+        });
+        autoUpdater.on('update-not-available', (info: any) => {
+            this._sendStatusToWindow('Update not available.');
+        });
+        autoUpdater.on('error', err => {
+            this._sendStatusToWindow('Error in auto-updater. ' + err);
+        });
+        autoUpdater.on('before-quit-for-update', (info: any) => {
+            console.log(info);
+            // let log_message = 'Download speed: ' + progressObj.bytesPerSecond;
+            // log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+            // log_message = log_message + ' (' + progressObj.transferred + '/' + progressObj.total + ')';
+            // this._sendStatusToWindow(log_message);
+        });
+        autoUpdater.on('update-downloaded', (info: any) => {
+            this._sendStatusToWindow('Update downloaded');
+            setTimeout(function () {
+                autoUpdater.quitAndInstall();
+            }, 5000);
+        });
+    }
+
+    _setSocket() {
+        this.server.io.on('connection', socket => {
             console.log('A new client has connected.');
             // console.log('Connected sockets:', await this.server.io.fetchSockets());
             try {
+                this.listenSettingDisableControlPanel();
+
                 socket.on('info_user', (info: InfoUser) => {
                     const { username, ip } = info;
                     const address = this.decryptData({ iv: ip.iv, encryptedData: ip.encryptedData });
                     this.listenCredentials(address, username);
                 });
 
-                socket.on('disconnect', async () => {
+                socket.on('disconnect', () => {
                     socket.disconnect(true);
                     console.log('A client has disconnected.');
                     ipcMain.removeHandler('credentials');
@@ -75,32 +177,22 @@ class MainWindow {
         });
     }
 
-    private load() {
-        this.init();
+    _load() {
+        this._init();
         this.server = new Server();
         this.server.start();
-        this.setSocket();
+        this._setSocket();
+        this._onUpdates();
         this.window.show();
     }
 
-    // listenPong() {
-    //     ipcMain.on('message', (event, message) => {
-    //         // let clicks = 0;
-    //         if (message === 'ping') {
-    //             event.reply('reply', 'pong');
-    //         }
-    //         // this.store.set('clicks', clicks++);
-    //         // console.log(this.store.get('clicks'));
-    //     });
-    // }
-
-    public decryptData(data: any): string | undefined {
+    decryptData(data: any): string | undefined {
         const result = decrypt(data);
         return result;
     }
 
-    private listenSettingDisableControlPanel(): void | { message: string; status: string } {
-        ipcMain.handle('s_control_panel', async (_, setting) => {
+    listenSettingDisableControlPanel(): void | { message: string; status: string } {
+        ipcMain.handle('s_control_panel', async (_, setting: number) => {
             try {
                 await this.client.disableControlPanel(setting);
                 return { message: 'Operacion exitosa', status: 'ok' };
@@ -110,11 +202,8 @@ class MainWindow {
         });
     }
 
-    private listenCredentials(
-        address: string | undefined,
-        username: string
-    ): void | { message: string; status: string } {
-        ipcMain.handle('credentials', async (_, credentials: any) => {
+    listenCredentials(address: string | undefined, username: string): void | { message: string; status: string } {
+        ipcMain.handle('credentials', async (_, credentials: Credentials) => {
             try {
                 if (credentials !== null) {
                     const { password, ip, name } = credentials;
@@ -136,15 +225,18 @@ class MainWindow {
     }
 
     app() {
-        if (require('electron-squirrel-startup')) app.quit();
+        if (handleSquirrelEvent()) {
+            // squirrel event handled and app will exit in 1000ms, so don't do anything else
+            return;
+        }
 
         app.whenReady().then(() => {
-            this.load();
-            this.listenSettingDisableControlPanel();
+            this._load();
+            autoUpdater.checkForUpdates();
         });
 
-        app.on('window-all-closed', () => {
-            app.quit();
+        app.on('window-all-closed', function () {
+            if (process.platform !== 'darwin') app.quit();
         });
     }
 }

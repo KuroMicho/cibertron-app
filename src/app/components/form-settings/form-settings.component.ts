@@ -73,6 +73,7 @@ export class FormSettingsComponent implements OnInit {
             this.loading = false;
             this.openSnackBar();
         } catch (err: string | any) {
+            console.log(err);
             if (err) {
                 this.iconStatus = false;
                 this.alert = 'Terminal Desconectada';

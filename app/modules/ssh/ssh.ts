@@ -39,9 +39,9 @@ export default class SSH {
         //     // notifier.notify("Connected to the remote machine successfully!");
         //     // DisableControlPanel(0);
         //     // DisableIllegalApps(['.exe', '.msi']);
-        //     // CreateLocalGroup("CiberCOL");
+        //     // CreateLocalGroup("Cibertron");
         //     // ViewUserAccounts();
-        //     // AddUserToGroup("CiberCOL", "Kevin");
+        //     // AddUserToGroup("Cibertron", "Kevin");
         // })
         // .catch((error: any) => {
         //     console.error('Error connecting to the remote machine: ', error);
